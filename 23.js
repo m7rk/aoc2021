@@ -1,9 +1,7 @@
 fs = require('fs');
 
-// renaming these to less shitty names
-// 1,2,3,4
-halls = ["",    "2",      "4",      "",   ""]
-rooms =   [  "21",    "",    "33",     "41"]
+halls = ["",    "",      "",      "",   ""]
+rooms =   [  "21",    "34",    "23",     "41"]
 //#01.2.3.4.56#
 //###A#B#C#D###
 
@@ -56,6 +54,13 @@ function generate_legal_moves(croom,chall)
     if(uname != undefined)
     {
       uval = parseInt(uname)
+
+      // special case, if i'm already in the room i belong in, alone or not, return.
+      if((uval-1 == r) && (rooms[r] == uname || rooms[r] == uname + uname))
+      {
+          continue
+      }
+
       // move RIGHT
       for(dx = r+1; dx < halls.length; dx++)
       {
@@ -91,14 +96,14 @@ function applyMove(move,oldroom,oldhall)
   if(move[0])
   {
     //move from room to hall
-    halls[move[2]] = oldroom[move[1]][0]
+    oldhall[move[2]] = oldroom[move[1]][0]
     oldroom[move[1]] = oldroom[move[1]].substring(1)
   }
   else
   {
     //move from hall to room
     rooms[move[2]] = halls[move[1]] + rooms[move[2]]
-    halls[move[1]] = ""
+    oldhall[move[1]] = ""
   }
 }
 
