@@ -32,7 +32,7 @@ function generate_legal_moves(croom,chall)
           while(!(uval == p || uval == p-1))
           {
             p += Math.sign(uval-h)
-            if(halls[p] != "")
+            if(chall[p] != "")
             {
               legal_move = false
               break
@@ -50,13 +50,13 @@ function generate_legal_moves(croom,chall)
   // Try to move an Amphipod outside.
   for(r = 0; r < rooms.length; r++)
   {
-    uname = rooms[r][0]
+    uname = croom[r][0]
     if(uname != undefined)
     {
       uval = parseInt(uname)
 
       // special case, if i'm already in the room i belong in, alone or not, return.
-      if((uval-1 == r) && (rooms[r] == uname || rooms[r] == uname + uname))
+      if((uval-1 == r) && (croom[r] == uname || croom[r] == uname + uname))
       {
           continue
       }
@@ -64,7 +64,7 @@ function generate_legal_moves(croom,chall)
       // move RIGHT
       for(dx = r+1; dx < halls.length; dx++)
       {
-        if(halls[dx] == "")
+        if(chall[dx] == "")
         {
           // legal move.
           moves.push([true,r,dx])
@@ -77,7 +77,7 @@ function generate_legal_moves(croom,chall)
         // move LEFT
         for(dx = r; dx >= 0; dx--)
         {
-          if(halls[dx] == "")
+          if(chall[dx] == "")
           {
             // legal move.
             moves.push([true,r,dx])
@@ -102,9 +102,56 @@ function applyMove(move,oldroom,oldhall)
   else
   {
     //move from hall to room
-    rooms[move[2]] = halls[move[1]] + rooms[move[2]]
+    oldroom[move[2]] = oldhall[move[1]] + oldroom[move[2]]
     oldhall[move[1]] = ""
   }
 }
 
-console.log(generate_legal_moves(rooms,halls))
+function stringify(croom,challs)
+{
+  s = ""
+  for(r = 0; r < rooms.length; r++)
+  {
+    s += croom[r] + ","
+  }
+  s += "|"
+  for(h = 0; h < halls.length; h++)
+  {
+    s += challs[h] + ","
+  }
+  return s
+}
+
+seen = {}
+queue = [[rooms,halls]]
+
+
+while(true)
+{
+  if(queue.length == 0)
+  {
+    break
+  }
+
+  curr = queue.shift()
+
+  // Generate every possible move at the node.
+  moves = generate_legal_moves(curr[0],curr[1])
+
+  moves.forEach(m => 
+  {
+    nextRooms = [...curr[0]];
+    nextHalls = [...curr[1]];
+
+    console.log(stringify(nextRooms,nextHalls))
+    // Apply the move.
+    applyMove(m,nextRooms,nextHalls)
+
+    // Check if we have seen this state before.
+    if(seen[stringify(nextRooms,nextHalls)] == undefined)
+    {
+      seen[stringify(nextRooms,nextHalls)] = true
+      queue.push([nextRooms,nextHalls])
+    }
+  })
+}
