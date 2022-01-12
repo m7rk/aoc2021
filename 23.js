@@ -1,7 +1,9 @@
 fs = require('fs');
 
-halls = ["",    "",      "",      "",     ""]
-rooms =   [  "21",    "34",    "23",     "41"]
+//       0    1       2         3       4         5    6 
+halls = ["",  "",     "",      "",      "",       "", ""]
+rooms =   [       "13",     "43",    "14",     "22"]
+//                0         1       2         3
 
 function generate_legal_moves(croom,chall)
 {
@@ -15,11 +17,15 @@ function generate_legal_moves(croom,chall)
     if(uname != "")
     {
       uval = parseFloat(uname)-1
+      // If space in the hole
       if(croom[uval] == "" || croom[uval] == uname)
       {
-        // always true if uval == p or uval == p+1
-        if(uval == h || uval == h-1)
+        // Suppose we are a "2", uval is "1".
+        // "2"s need to get to 1+1 (2) or 1+2 (3)
+        // add bias of +1 or +2
+        if(uval+1 == h || uval+2 == h)
         {
+          // go home.
           moves.push([false,h,uval])
         } 
         else
@@ -27,9 +33,9 @@ function generate_legal_moves(croom,chall)
           legal_move = true
           p = h
           // legal move. may go home, if not blocked.
-          while(!(uval == p || uval == p-1))
+          while(!(uval+1 == p || uval+2 == p))
           {
-            p += Math.sign(uval-h)
+            p += Math.sign((uval+1)-h)
             if(chall[p] != "")
             {
               legal_move = false
@@ -60,7 +66,7 @@ function generate_legal_moves(croom,chall)
       }
 
       // move RIGHT
-      for(dx = r+1; dx < halls.length; dx++)
+      for(dx = r+2; dx < halls.length; dx++)
       {
         if(chall[dx] == "")
         {
@@ -73,7 +79,7 @@ function generate_legal_moves(croom,chall)
       }
 
         // move LEFT
-        for(dx = r; dx >= 0; dx--)
+        for(dx = r+1; dx >= 0; dx--)
         {
           if(chall[dx] == "")
           {
@@ -107,14 +113,20 @@ function applyMove(move,oldroom,oldhall)
     }
 
     // Now, we are at the end of the hall. if greater return 1 step + how many we have to (from zero index)
-    if(move[2] <= move[1])
+    if(move[2] <= (move[1]+1))
     {
-      steps += 1 + (move[1] - move[2]) * 2
+      steps += 1 + ((move[1]+1)  - move[2]) * 2
     } 
     else
     {
       // up to one index.
-      steps += 1 + ((move[2]-1) - move[1]) * 2
+      steps += 1 + (move[2] - (move[1]+2)) * 2
+    }
+
+    // subtract a step if going to far rooms.
+    if(move[2] == 0 || move[2] == halls.length-1)
+    {
+      steps -= 1
     }
 
     oldhall[move[2]] = oldroom[move[1]][0]
@@ -125,17 +137,18 @@ function applyMove(move,oldroom,oldhall)
   }
   else
   {
+    
     //step calc
     steps = 0
     // room > hall
-    if(move[2] >= move[1])
+    if(move[2] >= (move[1]-1))
     {
-      steps += 1 + (move[2] - move[1]) * 2
+      steps += 1 + (move[2] - (move[1]-1)) * 2
     } 
     else
     {
       //room > hall
-      steps += 1 + ((move[1]-1) - move[2]) * 2
+      steps += 1 + ((move[1] - 2) - move[2]) * 2
     }
 
     if(oldroom[move[2]].length == 1)
@@ -146,6 +159,13 @@ function applyMove(move,oldroom,oldhall)
     {
       steps += 2
     }
+
+    // subtract a step if going to far rooms.
+    if(move[1] == 0 || move[1] == halls.length-1)
+    {
+      steps -= 1
+    }
+
     baseVal = Math.pow(10,parseInt(oldhall[move[1]])-1)
 
     oldroom[move[2]] = oldhall[move[1]] + oldroom[move[2]]
@@ -192,6 +212,15 @@ function min(queue)
 seen = {}
 queue = [[rooms,halls,0]]
 
+/**
+
+v = generate_legal_moves(rooms,halls)[0]
+console.log(v)
+console.log(applyMove(v,rooms,halls))
+
+*/
+
+
 while(true)
 {
   if(queue.length == 0)
@@ -235,3 +264,4 @@ while(true)
     }
   })
 }
+
