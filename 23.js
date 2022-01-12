@@ -1,9 +1,7 @@
 fs = require('fs');
 
-halls = ["",    "",      "",      "",   ""]
+halls = ["",    "",      "",      "",     ""]
 rooms =   [  "21",    "34",    "23",     "41"]
-//#01.2.3.4.56#
-//###A#B#C#D###
 
 function generate_legal_moves(croom,chall)
 {
@@ -95,16 +93,67 @@ function applyMove(move,oldroom,oldhall)
 {
   if(move[0])
   {
-    //move from room to hall
+    // move from room to hall
+    // we need to count steps, now.
+    steps = 0
+    // we need one step to exit the hall (two if lone)
+    if(oldroom[move[1]].length == 2)
+    {
+      steps += 1
+    } 
+    else
+    {
+      steps += 2
+    }
+
+    // Now, we are at the end of the hall. if greater return 1 step + how many we have to (from zero index)
+    if(move[2] <= move[1])
+    {
+      steps += 1 + (move[1] - move[2]) * 2
+    } 
+    else
+    {
+      // up to one index.
+      steps += 1 + ((move[2]-1) - move[1]) * 2
+    }
+
     oldhall[move[2]] = oldroom[move[1]][0]
     oldroom[move[1]] = oldroom[move[1]].substring(1)
+    baseVal = Math.pow(10,parseInt(oldhall[move[2]])-1)
+    return steps * baseVal
+
   }
   else
   {
-    //move from hall to room
+    //step calc
+    steps = 0
+    // room > hall
+    if(move[2] >= move[1])
+    {
+      steps += 1 + (move[2] - move[1]) * 2
+    } 
+    else
+    {
+      //room > hall
+      steps += 1 + ((move[1]-1) - move[2]) * 2
+    }
+
+    if(oldroom[move[2]].length == 1)
+    {
+      steps += 1
+    } 
+    else
+    {
+      steps += 2
+    }
+    baseVal = Math.pow(10,parseInt(oldhall[move[1]])-1)
+
     oldroom[move[2]] = oldhall[move[1]] + oldroom[move[2]]
     oldhall[move[1]] = ""
+
+    return steps * baseVal
   }
+
 }
 
 function stringify(croom,challs)
@@ -122,9 +171,26 @@ function stringify(croom,challs)
   return s
 }
 
-seen = {}
-queue = [[rooms,halls]]
+function finished(crooms)
+{
+  return (crooms[0] == "11" && crooms[1] == "22" && crooms[2] == "33" && crooms[3] == "44")
+}
 
+function min(queue)
+{
+  low_idx = 0
+  for(q = 1; q < queue.length; q++)
+  {
+    if(queue[q][2] < queue[low_idx][2])
+    {
+      low_idx = q
+    }
+  }
+  return low_idx
+}
+
+seen = {}
+queue = [[rooms,halls,0]]
 
 while(true)
 {
@@ -133,7 +199,15 @@ while(true)
     break
   }
 
-  curr = queue.shift()
+  nextIdx = min(queue)
+  curr = queue[nextIdx]
+  queue.splice(nextIdx, 1);
+
+  if(finished(curr[0]))
+  {
+    console.log(curr[2])
+    return
+  }
 
   // Generate every possible move at the node.
   moves = generate_legal_moves(curr[0],curr[1])
@@ -142,16 +216,22 @@ while(true)
   {
     nextRooms = [...curr[0]];
     nextHalls = [...curr[1]];
+    cost = curr[2]
 
-    console.log(stringify(nextRooms,nextHalls))
     // Apply the move.
-    applyMove(m,nextRooms,nextHalls)
+    moveCost = applyMove(m,nextRooms,nextHalls)
 
     // Check if we have seen this state before.
     if(seen[stringify(nextRooms,nextHalls)] == undefined)
     {
-      seen[stringify(nextRooms,nextHalls)] = true
-      queue.push([nextRooms,nextHalls])
+      seen[stringify(nextRooms,nextHalls)] = cost + moveCost
+      queue.push([nextRooms,nextHalls,cost + moveCost])
+    }
+    // check if we have seen this state before, but with a lower cost.
+    else if(seen[stringify(nextRooms,nextHalls)] > cost + moveCost)
+    {
+      seen[stringify(nextRooms,nextHalls)] = cost + moveCost
+      queue.push([nextRooms,nextHalls,cost + moveCost])     
     }
   })
 }
