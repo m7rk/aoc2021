@@ -50,50 +50,68 @@ while(true)
 // idea for solution -> memoize how many wins take place for any given board state
 // there are ONLY 21 * 21 board states. So this could work.
 
-function getWinCount(av,bv,as,bs,roll,ply)
+// Had a ˢᵐᵒˡ push from reddit but this code is 99% original.
+// just fucked up recursion, i needed to run it on EVERY dice roll, not just every SET of dice rolls.
+// There was probably a way if i mult'd eveything by 27..
+
+// also rekt by weird JS rules involving scoping. USE THOSE VAR KEYWORDS PEOPLE. OTHERWISE IT'S ALL GLOBALS AND YOUR RECURSION WILL BREAK.
+
+cache = {}
+
+function getWinCount(as,bs,av,bv,dicesum,ply,rollno)
 {
-    // first, move mice.
-    if(ply)
+    // sum scores if ply is 2.
+    if(rollno == 3)
     {
-        av = move(av,roll)
-        as += av
+        if(ply)
+        {
+            av = move(av,dicesum)
+            as += av
+        }
+        else
+        {
+            bv = move(bv,dicesum)
+            bs += bv
+        }
+        ply = !ply
+        rollno = 0
+        dicesum = 0
     }
-    else
+    if (as >= 21)
     {
-        bv = move(bv,roll)
-        bs += bv
-    }
-    // second, check for winner.
-    if(as >= 21)
-    {
-        // universe where a wins.
         return [1,0]
-    }
-
-    if(bs >= 21)
+    } 
+    if (bs >= 21)
     {
-        // universe where b wins.
         return [0,1]
+    } 
+    var aw = 0
+    var bw = 0
+    // see if this position is memoized
+    var cache_str = as + "," + bs + "," + av + "," + bv + "," + dicesum + "," + ply + "," + rollno
+
+    if(cache[cache_str])
+    {
+        return cache[cache_str]
     }
-
-    console.log("game continues. score: " + as + " " + bs)
-    console.log("game continues. eval: " + av + " " + bv)
-
-    console.log("let roll 1:")
-    let g1 = getWinCount(av,bv,as,bs,1,!ply)
-    console.log("let roll 2:")
-    let g2 = getWinCount(av,bv,as,bs,2,!ply)
-    console.log("let roll 3:")
-    let g3 = getWinCount(av,bv,as,bs,3,!ply)
-    return [g1[0] + g2[0] + g3[0], g1[1] + g2[1] + g3[1]]
+    
+    for (var droll = 1; droll <= 3; droll++) 
+    {
+        var r = getWinCount(as,bs,av,bv,dicesum + droll,ply,rollno+1)
+        aw += r[0];
+        bw += r[1]
+    }
+    
+    cache[cache_str] = [aw,bw]
+    return[aw,bw]
 }
 
-av = 1
-bv = 1
-as = 14
-bs = 14
+av = 7
+bv = 10
+as = 0
+bs = 0
 
-let g1 = getWinCount(av,bv,as,bs,1,true)
+let g1 = getWinCount(as,bs,av,bv,0,true,0)
 let g2 = [0,0]
 let g3 = [0,0]
 //let g2 = getWinCount(av,bv,as,bs,2,true)
