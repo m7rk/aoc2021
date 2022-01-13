@@ -42,6 +42,7 @@ function tryExplode(v)
   while(true)
   {
     last = v.join("")
+    console.log(last)
     explode(v)
     if(last == v.join(""))
     {
@@ -59,25 +60,21 @@ function explode(s)
     if(e == "[")
     {
       depth += 1
-      if(depth > 5)
-      {
-        console.log("D" + depth)
-      }
     }
     else if(e == "]")
     {
       depth -= 1
     }
-    // Result changed (unexpectedly!) if depth > 5
-    else if(depth >= 5 && e != ",") 
+    // ASSERT this is a pair and not just a number.
+    else if(depth > 4 && e != "," && !isNaN(parseInt(s[i+2])))
     {
-
       // explode time
       l_num_m = s.slice(0,i-2).reverse().findIndex((x) => (x != "[" && x != "]" && x != ","))
       r_num_m = s.slice(i+3,s.length).findIndex((x) => (x != "[" && x != "]" && x != ","))
 
       // this is likely a problem, what if no neg number
       lloc = l_num_m != -1 ? (i-3) - l_num_m : null
+
       rloc = r_num_m != -1 ? r_num_m + (i+3) : null
 
       if(lloc != null)
@@ -109,6 +106,7 @@ function spl(s)
       s.splice(i,0,",")
       s.splice(i,0,Math.floor(val/2))
       s.splice(i,0,"[")
+      return
     }
   }
 }
