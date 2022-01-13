@@ -2,70 +2,69 @@ fs = require("fs")
 
 code = fs.readFileSync('24.txt', 'utf8').split("\n").map(n => n.split(" "))
 
-function eval(val)
+op1 = []
+op2 = []
+op3 = []
+
+for(depth = 0; depth < 14; ++depth)
 {
-    if(regs[val] == undefined)
-    {
-        return parseInt(val)
-    }
-    return regs[val]
+    op1.push(parseInt(code[18*depth+4][2]))
+    op2.push(parseInt(code[18*depth+5][2]))
+    op3.push(parseInt(code[18*depth+15][2]))
 }
 
-function run(nstack)
-{
-    regs = {"w" : 0, "x" : 0, "y" : 0, "z" : 0}
+// These are the states will always produce false
+SURELY_BAD_STATES = {}
 
-    code.forEach(e => 
+function GenerateModelNumber(depth, modelNumber, z, digits)
+{
+    if (SURELY_BAD_STATES[depth + "|" + z]== true || depth == 14)
     {
-        //inp a - Read an input value and write it to variable a.
-        if(e[0] == "inp")
+        return null;
+    }
+
+    var newModelNumber = modelNumber * 10;
+    var originalZ = z;
+
+    for (var i = 0; i < digits.length; ++i)
+    {
+        var z = originalZ;
+        var w = digits[i];
+        var x = z;
+        x %= 26;
+        z = Math.floor( z / op1[depth]);
+        x += op2[depth];
+        x = x == w ? 1 : 0;
+        x = x == 0 ? 1 : 0;
+        var y = 25;
+        y *= x;
+        y += 1;
+        z *= y;
+        y = w;
+        y += op3[depth];
+        y *= x;
+        z += y;
+
+        if (z == 0 && depth == 13)
         {
-            regs[e[1]] = nstack.shift()
+            return newModelNumber + digits[i];
         }
-        // add a b - Add the value of a to the value of b, then store the result in variable a.
-        if(e[0] == "add")
+
+        var ret = GenerateModelNumber(depth + 1, newModelNumber + digits[i], z, digits);
+        
+        if(ret != null)
         {
-            regs[e[1]] = regs[e[1]] + eval(e[2])
+            return ret;
         }
-        //mul a b - Multiply the value of a by the value of b, then store the result in variable a.
-        if(e[0] == "mul")
-        {
-            regs[e[1]] = regs[e[1]] * eval(e[2])
-        }
-        //div a b - Divide the value of a by the value of b, truncate the result to an integer, then store the result in variable a. (Here, "truncate" means to round the value toward zero.)
-        if(e[0] == "div")
-        {
-            regs[e[1]] = Math.floor(regs[e[1]] / eval(e[2]))
-        }
-        //mod a b - Divide the value of a by the value of b, then store the remainder in variable a. (This is also called the modulo operation.)
-        if(e[0] == "mod")
-        {
-            regs[e[1]] = regs[e[1]] % eval(e[2])
-        }
-        //eql a b - If the value of a and b are equal, then store the value 1 in variable a. Otherwise, store the value 0 in variable a.
-        if(e[0] == "eql")
-        {
-            regs[e[1]] = (regs[e[1]] == eval(e[2])) ? 1 : 0
-        }
-    });
+    }
+
+    SURELY_BAD_STATES[depth + "|" + originalZ] = true;
+
+    return null;
 }
 
-// works(?) but runs at 100,000 ops/sec
-// we are gonna need to work smarter
-for(i = 99999999999999; i != 0; --i)
-{
-    l = i.toString().split("").map(v => parseInt(v))
-    if(!l.includes(0))
-    {
-        run(l)
-    }
-    if(i % 100000 == 0)
-    {
-        console.log(i)
-    }
-    if(regs["z"] == 0)
-    {
-        console.print(i)
-        throw ERR
-    }
-}
+console.log(GenerateModelNumber(0, 0, 0, [9, 8, 7, 6, 5, 4, 3, 2, 1]))
+SURELY_BAD_STATES = {}
+// takes a few hours to complete part two.
+console.log(GenerateModelNumber(0, 0, 0, [1, 2, 3, 4, 5, 6, 3, 2, 1]))
+
