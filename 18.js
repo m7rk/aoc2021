@@ -1,40 +1,38 @@
 fs = require('fs');
-
-
 // There is probably an 10000000000000000000000000000000000 million IQ play with recusion or trees
 // but I LIKE MY REGEX, LIST WRANGLIN SOLUTION DAMNIT
-qs = fs.readFileSync('18.txt', 'utf8').split("\n").map(v => v.split(""))
-res = []
 
 // caution, i am being lazy with scoping here
 // be CAREFUL, those let's and globals will bite you
-v = qs[0]
-qs.splice(0,1)
-
-while(true)
+function eval(list)
 {
-  let vlast = v.join("")
-  tryExplode(v)
-  spl(v)
-  if(vlast == v.join(""))
+  v = list[0]
+  list.splice(0,1)
+  while(true)
   {
-    if(qs.length == 0)
+    let vlast = v.join("")
+    tryExplode(v)
+    spl(v)
+    if(vlast == v.join(""))
     {
-      console.log(v.join(""))
-      return
+      if(list.length == 0)
+      {
+        return magn(v.join(""))
+      }
+
+      v.splice(0,0,"[")
+      v.splice(v.length-1,0,"]")
+
+      v.splice(v.length-1,0,",")
+      list[0].forEach(e=> 
+      {    
+        v.splice(v.length-1,0,e)
+      });
+      list.splice(0,1)
     }
-
-    v.splice(0,0,"[")
-    v.splice(v.length-1,0,"]")
-
-    v.splice(v.length-1,0,",")
-    qs[0].forEach(e=> 
-    {    
-      v.splice(v.length-1,0,e)
-    });
-    qs.splice(0,1)
   }
 }
+
 
 
 function tryExplode(v)
@@ -42,7 +40,6 @@ function tryExplode(v)
   while(true)
   {
     last = v.join("")
-    console.log(last)
     explode(v)
     if(last == v.join(""))
     {
@@ -110,3 +107,43 @@ function spl(s)
     }
   }
 }
+
+function magn(vals)
+{
+  regex = /\[[0-9]+,[0-9]+\]/
+  pair = vals.match(regex)
+  while(pair != null)
+  {
+    s = pair[0].replace("[","").replace("]","").split(",")
+    l = 3 * parseInt(s[0])
+    r = 2 * parseInt(s[1])
+    vals = vals.replace(pair,""+(l+r))
+    pair = vals.match(regex)
+  }
+  return parseInt(vals)
+}
+
+
+qs = fs.readFileSync('18.txt', 'utf8').split("\n").map(v => v.split(""))
+console.log(eval(qs))
+
+mval = 0
+for(ii = 0; ii != 100; ++ii)
+{
+  console.log(ii + "%")
+  for(jj = 0; jj != 100; ++jj)
+  { 
+    if(ii != jj)
+    {
+      // dumbass array gets mutated in the dumbass function so just relaod it, i DO NOT Care
+      qs = fs.readFileSync('18.txt', 'utf8').split("\n").map(v => v.split(""))
+      m = eval([qs[ii],qs[jj]])
+      if(m > mval)
+      {
+        mval = m
+      }
+    }
+  }
+}
+
+console.log(mval)
